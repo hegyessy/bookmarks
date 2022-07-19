@@ -2,6 +2,8 @@
 import { h } from "preact";
 import { tw } from "@twind";
 import { Database } from "../utils/data.ts";
+import { gitHubApi } from "../utils/githubapi.ts";
+import { getCookies, setCookie } from "https://deno.land/std@0.143.0/http/cookie.ts";
 import { HandlerContext, Handlers, PageProps } from "$fresh/server.ts";
 
 export const handler: Handlers = {
@@ -9,16 +11,37 @@ export const handler: Handlers = {
     const db = await new Database();
     const bookmarks = await db.getBookmarks();
     const categories = await db.getCategories();
-    const resp = await ctx.render({bookmarks, categories});
+    const verifyAccessToken = getCookies(req.headers)["bookmarks_token"];
+
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code");
+    let resp;
+
+    if (!code) {
+      resp = await ctx.render({bookmarks, categories});
+    } else {
+      const accessToken = await gitHubApi.getAccessToken(code);
+      const userData = await gitHubApi.getUserData(accessToken);
+      
+      resp = await ctx.render({bookmarks, categories, userData});
+      
+      setCookie(resp.headers, {
+        name: "bookmarks_token",
+        value: accessToken,
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+      });
+    }
     return resp;
   }
 }
 
 export default function Home(props: PageProps) {
-
+  console.log(props)
   return (
     <div class={tw`p-4 mx-auto max-w-screen-md`}>
       <h1 class={tw`mb-2 font-bold text-2xl`}>Bookmarks</h1>
+      <a href="/api/login">Login</a>
       {
         props.data.categories.map((category) => {
           
