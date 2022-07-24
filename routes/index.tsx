@@ -1,68 +1,59 @@
 /** @jsx h */
 import { h } from "preact";
 import { tw } from "@twind";
-import { Database } from "../utils/data.ts";
-import { gitHubApi } from "../utils/githubapi.ts";
-import { getCookies, setCookie } from "https://deno.land/std@0.143.0/http/cookie.ts";
-import { HandlerContext, Handlers, PageProps } from "$fresh/server.ts";
+import { Handlers, PageProps } from "$fresh/server.ts";
+import { parse } from "https://deno.land/std@0.149.0/encoding/yaml.ts";
 
-export const handler: Handlers = {
-  async GET(req: Request, ctx: HandlerContext): Promise<Response> {
-    const db = await new Database();
-    const bookmarks = await db.getBookmarks();
-    const categories = await db.getCategories();
-    const verifyAccessToken = getCookies(req.headers)["bookmarks_token"];
+type Bookmark = {
+  title: string;
+  url: string;
+};
 
-    const url = new URL(req.url);
-    const code = url.searchParams.get("code");
-    let resp;
+type Bookmarks = {
+  bookmarks: Bookmark[];
+};
 
-    if (!code) {
-      resp = await ctx.render({bookmarks, categories});
-    } else {
-      const accessToken = await gitHubApi.getAccessToken(code);
-      const userData = await gitHubApi.getUserData(accessToken);
-      
-      resp = await ctx.render({bookmarks, categories, userData});
-      
-      setCookie(resp.headers, {
-        name: "bookmarks_token",
-        value: accessToken,
-        maxAge: 60 * 60 * 24 * 7,
-        httpOnly: true,
-      });
+export const handler: Handlers<Bookmark[] | null> = {
+  async GET(_, ctx) {
+    const yaml = await Deno.readTextFile("utils/bookmarks.yaml");
+    const parsed = await parse(yaml);
+    const { bookmarks } = parsed as Bookmarks;
+
+    if (!parsed) {
+      return ctx.render(null);
     }
-    return resp;
-  }
-}
+
+    const data = bookmarks.sort((a, b) => a.title < b.title ? -1 : 1);
+
+    return ctx.render(data);
+  },
+};
+
+export const Bookmark = ({ title, url }: Bookmark) => {
+  return (
+    <a
+      href={url}
+      title={title}
+      target="_blank"
+      class={tw`text-gray-200 hover:text-blue-400`}
+    >
+      <span class={tw`text-gray-900 mr-2`}>{title}</span>
+      <span class={tw``}>{url}</span>
+    </a>
+  );
+};
 
 export default function Home(props: PageProps) {
-  console.log(props)
+  const data = props.data;
+
   return (
     <div class={tw`p-4 mx-auto max-w-screen-md`}>
       <h1 class={tw`mb-2 font-bold text-2xl`}>Bookmarks</h1>
-      <a href="/api/login">Login</a>
-      {
-        props.data.categories.map((category) => {
-          
-          const bm = props.data.bookmarks.filter((bookmark) => {
-            return bookmark.category === category.id;
-          })
-          
-          return (
-            <div class={tw`my-4`}>
-              <h2 class={tw`text-gray-400`}>{category.title}</h2>
-              <ul>
-                {
-                  bm.map((bookmark) => {
-                    return <li><a href={bookmark.url} target="_blank">{bookmark.title}</a></li>
-                  })
-                }
-              </ul>
-            </div>
-          )
-        })
-      }
+      <div id="bookmarks" class={tw`flex flex-col`}>
+        {data.map(({ title, url }: Bookmark) => {
+          return <Bookmark title={title} url={url} />;
+        })}
+      </div>
     </div>
   );
 }
