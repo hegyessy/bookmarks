@@ -3,6 +3,7 @@ import { h } from "preact";
 import { tw } from "@twind";
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { parse } from "https://deno.land/std@0.149.0/encoding/yaml.ts";
+import Search from "../islands/search.tsx";
 
 type Bookmark = {
   title: string;
@@ -13,19 +14,23 @@ type Bookmarks = {
   bookmarks: Bookmark[];
 };
 
-export const handler: Handlers<Bookmark[] | null> = {
-  async GET(_, ctx) {
+export const handler: Handlers = {
+  async GET(req, ctx) {
+    const url = new URL(req.url);
+    const query = url.searchParams.get("q") || "";
     const yaml = await Deno.readTextFile("utils/bookmarks.yaml");
     const parsed = await parse(yaml);
-    const { bookmarks } = parsed as Bookmarks;
 
+    const { bookmarks } = parsed as Bookmarks;
     if (!parsed) {
       return ctx.render(null);
     }
 
-    const data = bookmarks.sort((a, b) => a.title < b.title ? -1 : 1);
+    const data = bookmarks.filter((bookmark) =>
+      bookmark.title.toLowerCase().includes(query)
+    ).sort((a, b) => a.title < b.title ? -1 : 1);
 
-    return ctx.render(data);
+    return ctx.render({ data, query });
   },
 };
 
@@ -44,11 +49,12 @@ export const Bookmark = ({ title, url }: Bookmark) => {
 };
 
 export default function Home(props: PageProps) {
-  const data = props.data;
-
+  const data = props.data.data;
+  console.log(props);
   return (
     <div class={tw`p-4 mx-auto max-w-screen-md`}>
       <h1 class={tw`mb-2 font-bold text-2xl`}>Bookmarks</h1>
+      <Search query={props.data.query} />
       <div id="bookmarks" class={tw`flex flex-col`}>
         {data.map(({ title, url }: Bookmark) => {
           return <Bookmark title={title} url={url} />;
