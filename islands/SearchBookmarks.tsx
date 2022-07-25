@@ -9,19 +9,14 @@ type Search = {
 
 export default function Search({ query }: Search) {
   const [q, setQ] = useState(query);
-  const inputRef = useRef() as any;
-  const form = useRef() as any;
+  const inputRef = useRef();
 
   useEffect(() => {
     inputRef.current.focus();
-  }, [q]);
-
-  const submit = () => {
-    return form.current.submit();
-  };
+  }, [q])
 
   return (
-    <form ref={form}>
+    <form >
       <input
         ref={inputRef}
         class={tw`bg-gray-100 rounded w-1/2 mb-2 px-3 py-2`}
@@ -31,7 +26,7 @@ export default function Search({ query }: Search) {
         placeholder="Search"
         onKeyUp={(event) => {
           event.currentTarget.value === ""
-            ? submit()
+            ? window.location = "/"
             : setQ(event.currentTarget.value);
         }}
       />

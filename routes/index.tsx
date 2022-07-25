@@ -3,7 +3,7 @@ import { h } from "preact";
 import { tw } from "@twind";
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { parse } from "https://deno.land/std@0.149.0/encoding/yaml.ts";
-import Search from "../islands/search.tsx";
+import SearchBookmarks from "../islands/SearchBookmarks.tsx";
 
 type Bookmark = {
   title: string;
@@ -50,11 +50,11 @@ export const Bookmark = ({ title, url }: Bookmark) => {
 
 export default function Home(props: PageProps) {
   const data = props.data.data;
-  console.log(props);
+
   return (
     <div class={tw`p-4 mx-auto max-w-screen-md`}>
       <h1 class={tw`mb-2 font-bold text-2xl`}>Bookmarks</h1>
-      <Search query={props.data.query} />
+      <SearchBookmarks query={props.data.query} />
       <div id="bookmarks" class={tw`flex flex-col`}>
         {data.map(({ title, url }: Bookmark) => {
           return <Bookmark title={title} url={url} />;
