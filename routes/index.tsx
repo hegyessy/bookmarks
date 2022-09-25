@@ -34,20 +34,6 @@ export const handler: Handlers = {
   },
 };
 
-export const Bookmark = ({ title, url }: Bookmark) => {
-  return (
-    <a
-      href={url}
-      title={title}
-      target="_blank"
-      class={tw`text-gray-200 hover:text-blue-400`}
-    >
-      <span class={tw`text-gray-900 mr-2`}>{title}</span>
-      <span class={tw``}>{url}</span>
-    </a>
-  );
-};
-
 export default function Home(props: PageProps) {
   const data = props.data.data;
 
@@ -63,3 +49,17 @@ export default function Home(props: PageProps) {
     </div>
   );
 }
+
+export const Bookmark = ({ title, url }: Bookmark) => {
+  return (
+    <a
+      href={url}
+      title={title}
+      target="_blank"
+      class={tw`text-gray-200 hover:text-blue-400`}
+    >
+      <span class={tw`text-gray-900 mr-2`}>{title}</span>
+      <span class={tw``}>{url}</span>
+    </a>
+  );
+};
