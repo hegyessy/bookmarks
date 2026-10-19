@@ -1,0 +1,48 @@
+#!/bin/sh
+# Keep the interactive launcher unchanged. Headless servers never read stdin.
+headless=false
+if [ "${1-}" = server ]; then
+    for arg do
+        [ "$arg" != --no-shell ] || headless=true
+    done
+fi
+set -- escript "$0.escript" "$@"
+
+if ! "$headless"; then
+    exec "$@"
+fi
+# OTP shuts down applications on TERM; its INT handler opens the BREAK menu.
+# Only the child VM ignores INT, so this shell can turn Ctrl-C into TERM.
+child=
+leftovers=
+stopping=false
+stop() {
+    stopping=true
+    if [ -n "$child" ]; then
+        # Remember owned children before shutdown can reparent them. Let OTP
+        # stop them in order; clean up a leftover compiler only after the VM exits.
+        if [ -z "$leftovers" ]; then
+            leftovers=$(ps -e -o pid= -o ppid= | awk -v root="$child" '
+                { parent[$1] = $2 }
+                function children(pid, p) {
+                    for (p in parent) if (parent[p] == pid) children(p)
+                    if (pid != root) print pid
+                }
+                END { children(root) }')
+        fi
+        kill -TERM "$child" 2>/dev/null || :
+    fi
+}
+trap stop INT TERM
+ERL_FLAGS="${ERL_FLAGS-} +Bi" "$@" </dev/null &
+child=$!
+if "$stopping"; then stop; fi
+# A trapped signal interrupts wait. Keep waiting until the child has exited.
+while :; do
+    wait "$child"
+    status=$?
+    if ! kill -0 "$child" 2>/dev/null; then
+        if [ -n "$leftovers" ]; then kill -KILL $leftovers 2>/dev/null || :; fi
+        exit "$status"
+    fi
+done
