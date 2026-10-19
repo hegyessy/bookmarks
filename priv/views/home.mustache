@@ -1,0 +1,10 @@
+<h1>Bookmarks</h1>
+<form action="/" method="get" role="search">
+  <label class="visually-hidden" for="search">Search bookmarks</label>
+  <input id="search" type="search" name="q" value="{{data.query}}" placeholder="Search" autofocus>
+</form>
+<div id="bookmarks">
+  {{#data.bookmarks}}
+  <a href="{{url}}" title="{{title}}" target="_blank" rel="noopener noreferrer"><span class="bookmark-title">{{title}}</span> <span class="bookmark-url">{{url}}</span></a>
+  {{/data.bookmarks}}
+</div>

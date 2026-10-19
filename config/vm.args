@@ -1,0 +1,6 @@
+# Stable identity for a release controlled on this computer.
+-sname bookmarks@localhost
+-kernel inet_dist_use_interface {127,0,0,1}
+
+# Same local control cookie as relx's generated default.
+-setcookie bookmarks

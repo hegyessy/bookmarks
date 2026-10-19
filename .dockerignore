@@ -1,0 +1,16 @@
+**/.git
+**/_build
+**/_checkouts
+**/.rebar3
+**/erl_crash.dump
+**/*.beam
+**/.env
+**/.env.*
+**/.ssh
+**/secrets
+**/*.key
+**/*.pem
+**/id_rsa
+**/id_ed25519
+data
+.DS_Store

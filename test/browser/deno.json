@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "playwright": "npm:playwright@1.63.0"
+  },
+  "compilerOptions": { "lib": ["deno.ns", "dom"] },
+  "tasks": {
+    "install": "deno run -A npm:playwright@1.63.0 install chromium webkit",
+    "test": "deno test --frozen -A bookmarks_test.ts"
+  }
+}

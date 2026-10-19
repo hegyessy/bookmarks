@@ -1,0 +1,8 @@
+{application, bookmarks, [
+    {description, "bookmarks web application"},
+    {vsn, "0.1.0"},
+    {modules, []},
+    {registered, []},
+    {applications, [kernel, stdlib, zev]},
+    {mod, {zev_application, bookmarks}}
+]}.
