@@ -63,10 +63,12 @@ It is specific to the build machine's OS and architecture. The app binds to
 `127.0.0.1` by default; set `BIND_IP=0.0.0.0` when a hosting platform needs an
 external listener. `PORT` selects the port. Local `.env` files are not loaded.
 
-A generated `Dockerfile` is also included for a Linux release. Building private
-Git dependencies requires temporary SSH forwarding and trusted known-hosts;
-see the [Ze’ev container guide](https://github.com/hegyessy/zev/blob/v0.4.0/docs/site/priv/views/docs/docker.md).
-Do not copy credentials into the image.
+A `Dockerfile` is also included for a Linux release. Build it locally with
+temporary SSH forwarding and trusted known-hosts, then deploy its packaged
+release. **Railway source builds reject this Dockerfile's SSH/secret mounts.**
+Follow [Deploy to Railway](docs/railway.md) for the private release-upload path
+that works on Hobby, or private registry pulls on Pro.
+Do not copy credentials into the image or pass them as build arguments.
 
 This migration does not change an existing deployment. The former Deno entry
 point is replaced by an Erlang service, so hosting must support an OTP release

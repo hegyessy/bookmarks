@@ -1,0 +1,52 @@
+#!/bin/sh
+# Extract a verified Linux image into a private Railway upload context.
+set -eu
+umask 077
+
+if [ "$#" -ne 1 ]; then
+    printf 'Usage: scripts/prepare-railway LINUX_AMD64_IMAGE\n' >&2
+    exit 2
+fi
+image=$1
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+engine=${BOOKMARKS_CONTAINER_ENGINE:-}
+if [ -z "$engine" ]; then
+    if command -v docker >/dev/null 2>&1; then engine=docker; else engine=container; fi
+fi
+case "$engine" in
+    docker|container) command -v "$engine" >/dev/null 2>&1 ;;
+    *) printf 'BOOKMARKS_CONTAINER_ENGINE must be docker or container.\n' >&2; exit 2 ;;
+esac
+
+context=$(mktemp -d "${TMPDIR:-/tmp}/bookmarks-railway.XXXXXX")
+trap 'status=$?; if [ "$status" -ne 0 ]; then rm -rf "$context"; fi' 0
+
+# Override the entrypoint: export files without starting Erlang or the app.
+set --
+if [ "$engine" = container ] && [ "$(uname -m)" = arm64 ]; then
+    set -- --rosetta
+fi
+"$engine" run "$@" --rm --platform linux/amd64 --user 0 \
+    --entrypoint tar --volume "$context:/export" "$image" \
+    -C /app -cf /export/release.tar . >&2
+mkdir "$context/release"
+tar -xf "$context/release.tar" -C "$context/release"
+rm "$context/release.tar"
+test -x "$context/release/bin/bookmarks"
+test -d "$context/release/releases"
+
+# Reuse the runtime stage so its libraries, user, and entrypoint stay in sync.
+awk '
+    /^FROM debian:trixie-slim AS runtime$/ { runtime = 1 }
+    runtime {
+        if ($0 ~ /^COPY --from=build --chown=app:app /) {
+            print "COPY --chown=app:app release/ ./"
+            copies++
+        } else {
+            print
+        }
+    }
+    END { if (!runtime || copies != 1) exit 1 }
+' "$root/Dockerfile" > "$context/Dockerfile"
+printf '%s\n' '.git' '.env' '.env.*' > "$context/.dockerignore"
+printf '%s\n' "$context"
