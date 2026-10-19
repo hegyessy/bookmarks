@@ -1,9 +1,15 @@
 # syntax=docker/dockerfile:1
 
+# Build this image locally with BuildKit, then deploy the private image.
+# Railway rejects SSH/secret mounts in source builds; see docs/railway.md.
 # Build the release on Linux, using the same Debian version as the runtime.
 FROM erlang:28.4.1 AS build
 WORKDIR /build
 COPY . .
+
+# Optional VM flags for local builds (for example, +JMsingle true under Rosetta).
+# They apply only to the build stage, never to the runtime image.
+ARG ERL_FLAGS
 
 # Credentials are optional, temporary BuildKit mounts; never COPY private keys.
 # Forward an SSH agent and mount trusted known_hosts for private Git dependencies.
