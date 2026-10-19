@@ -64,9 +64,10 @@ It is specific to the build machine's OS and architecture. The app binds to
 external listener. `PORT` selects the port. Local `.env` files are not loaded.
 
 A `Dockerfile` is also included for a Linux release. Build it locally with
-temporary SSH forwarding and trusted known-hosts, then deploy the resulting
-private image. **Railway source builds reject this Dockerfile's SSH/secret
-mounts.** Follow [Deploy to Railway](docs/railway.md) for the private-image path.
+temporary SSH forwarding and trusted known-hosts, then deploy its packaged
+release. **Railway source builds reject this Dockerfile's SSH/secret mounts.**
+Follow [Deploy to Railway](docs/railway.md) for the private release-upload path
+that works on Hobby, or private registry pulls on Pro.
 Do not copy credentials into the image or pass them as build arguments.
 
 This migration does not change an existing deployment. The former Deno entry

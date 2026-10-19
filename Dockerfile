@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Build this image locally with BuildKit, then deploy the private image.
+# Build locally with BuildKit, then upload its release or deploy a private image.
 # Railway rejects SSH/secret mounts in source builds; see docs/railway.md.
 # Build the release on Linux, using the same Debian version as the runtime.
 FROM erlang:28.4.1 AS build
